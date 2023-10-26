@@ -3,3 +3,8 @@ export type Note = {
     title: string,
     description: string
 }
+
+export type newNote = {
+    title: string,
+    content: string
+}
