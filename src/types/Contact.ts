@@ -4,3 +4,9 @@ export type Contact = {
     email: string,
     phone: string
 }
+
+export type newContact = {
+    name: string,
+    email: string,
+    phone: string
+}
