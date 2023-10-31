@@ -11,6 +11,9 @@ export default function Contacts() {
   const [newContactName, setNewContactName] = useState('');
   const [newContactEmail, setNewContactEmail] = useState('');
   const [newContactPhone, setNewContactPhone] = useState('');
+  const [updatedContactId, setUpdatedContactId] = useState(-1);
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const {
     data: contacts,
     isFetching,
@@ -51,7 +54,8 @@ export default function Contacts() {
       phone: newContactPhone,
       email: newContactEmail
     }
-    createContactMutation.mutate(newContact)
+    createContactMutation.mutate(newContact);
+    resetFields();
   }
 
   const deleteContactMutation = useMutation(
@@ -78,9 +82,50 @@ export default function Contacts() {
     deleteContactMutation.mutate(id)
   };
 
-  const handleEditContact = () => {
-    // Lógica para edição aqui
+  const updatecontactMutation = useMutation(
+    async (updatedcontact: Contact) => {
+      const response = await fetch(
+        `http://localhost:3000/contacts/${updatedcontact.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedcontact),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update the contact");
+      }
+      return response.json();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("contacts");
+      },
+    }
+  );
+
+  const handleEditContact = (contact: Contact) => {
+    setIsEditMode(true);
+
+    setNewContactName(contact.name);
+    setNewContactEmail(contact.email);
+    setNewContactPhone(contact.phone);
+    setUpdatedContactId(contact.id);
   };
+
+  const handleClickEdit = () => {
+    const editedContact = {
+      id: updatedContactId,
+      name: newContactName,
+      phone: newContactPhone,
+      email: newContactEmail
+    }
+    updatecontactMutation.mutate(editedContact);
+
+    resetFields();
+  } 
 
   if (isFetching) {
     return <Loading />;
@@ -90,14 +135,26 @@ export default function Contacts() {
     return <AppError />;
   }
 
+  const resetFields = () => {
+    setIsEditMode(false);
+    setNewContactName('') 
+    setNewContactEmail('');
+    setNewContactPhone('');
+    setUpdatedContactId(-1);
+  }
+
   return (
     <div>
       <h1>Contatos</h1>
       <div className="contacts">
-        <input type="text" id="new-contact-name" placeholder="Name" onChange={(event)=>setNewContactName(event.target.value)}/>
-        <input type="text" id="new-contact-email" placeholder="Email" onChange={(event)=>setNewContactEmail(event.target.value)}/>
-        <input type="text" id="new-contact-phone" placeholder="Phone" onChange={(event)=>setNewContactPhone(event.target.value)}/>
-        <button onClick={()=> handleCreateContact()}>Add</button>
+        <input type="text" id="new-contact-name" placeholder="Name" onChange={(event)=>setNewContactName(event.target.value)} value ={newContactName} />
+        <input type="text" id="new-contact-email" placeholder="Email" onChange={(event)=>setNewContactEmail(event.target.value)} value ={newContactEmail}/>
+        <input type="text" id="new-contact-phone" placeholder="Phone" onChange={(event)=>setNewContactPhone(event.target.value)} value ={newContactPhone}/>
+        <div className="buttons-container">
+          {isEditMode && <button onClick={()=> resetFields()}>Cancel</button>}
+          {isEditMode && <button onClick={()=> handleClickEdit()}>Save</button>}
+          {!isEditMode && <button onClick={()=> handleCreateContact()}>Add</button>}
+        </div>
         {contacts.map((contact: Contact) => (
           <ContactCard
             key={contact.id}
@@ -105,7 +162,7 @@ export default function Contacts() {
             email={contact.email}
             phone={contact.phone}
             handleDelete={()=> handleDeleteContact(contact.id)}
-            handleEdit={handleEditContact}
+            handleEdit={() => handleEditContact(contact)}
           />
         ))}
       </div>
