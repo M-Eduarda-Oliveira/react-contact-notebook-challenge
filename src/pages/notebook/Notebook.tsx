@@ -50,9 +50,10 @@ export default function Notebook() {
   const handleCreateNote = () => {
     const newNote = {
       title: newNoteTitle,
-      content: newNoteContent
+      description: newNoteContent
     }
     createNoteMutation.mutate(newNote)
+    resetFields();
   }
 
   const deleteNoteMutation = useMutation(

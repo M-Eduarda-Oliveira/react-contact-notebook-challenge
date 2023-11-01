@@ -6,5 +6,5 @@ export type Note = {
 
 export type newNote = {
     title: string,
-    content: string
+    description: string
 }
